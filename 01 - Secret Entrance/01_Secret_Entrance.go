@@ -8,62 +8,54 @@ import (
 	"strconv"
 )
 
-func rotateLock(combo string, lockPOS int, passedZero int) (int, int) {
-	rotationDIR := combo[0]
-	comboToInt, _ := strconv.Atoi(combo[1:])
+func rotateLock(combination string, initLockPOS int, passZeroCount int) (int, int) {
+	direction := combination[0]
+	convertedCombo, _ := strconv.Atoi(combination[1:])
 
-	if rotationDIR == 'L' {
-		fmt.Println("Rotating Left: ", comboToInt, "CURRENT POS: ", lockPOS)
-		newLockPOS := lockPOS - comboToInt
+	passZeroCount += (1 * (convertedCombo / 100))
 
-		if newLockPOS == 0 {
-			fmt.Println("HIT 0", passedZero)
-			passedZero += 1
-		}
+	if direction == 'L' {
+		// fmt.Println("CURRENT POS:", initLockPOS, "ROTATING LEFT:", convertedCombo, "TICKS")
+		newLockPOS := initLockPOS - (convertedCombo % 100)
 
-		if newLockPOS < 0 {
-			if len(combo[1:]) >= 3 {
-				passedZero += (1 * (comboToInt / 100))
-				fmt.Println("PASSED ZERO", (1 * (comboToInt / 100)), "Times.")
+		if newLockPOS <= 0 {
+			if initLockPOS != 0 {
+				passZeroCount += 1
+				newLockPOS = newLockPOS % 100 // IF BELOW RANGE
+				newLockPOS += 100             // IF NEGATIVE
+				newLockPOS = newLockPOS % 100 // IF AT 0 or SIMILAR
 			}
-			fmt.Println("PASSED ZERO", passedZero)
-			passedZero += 1
-			newLockPOS = newLockPOS % 100
-			newLockPOS += 100
-			newLockPOS = newLockPOS % 100
-			return newLockPOS, passedZero
 		}
-		return newLockPOS, passedZero
 
-	} else if rotationDIR == 'R' {
-		fmt.Println("Rotating Right: ", comboToInt, "CURRENT POS: ", lockPOS)
-		newLockPOS := lockPOS + comboToInt
+		newLockPOS = newLockPOS % 100 // IF BELOW RANGE
+		newLockPOS += 100             // IF NEGATIVE
+		newLockPOS = newLockPOS % 100 // IF AT 0 or SIMILAR
 
-		if newLockPOS == 0 {
-			fmt.Println("HIT 0", passedZero)
-			passedZero += 1
-		}
+		return newLockPOS, passZeroCount
+
+	} else if direction == 'R' {
+		newLockPOS := initLockPOS + (convertedCombo % 100)
 
 		if newLockPOS >= 100 {
-			if len(combo[1:]) >= 3 {
-				passedZero += (1 * (comboToInt / 100))
-				fmt.Println("PASSED ZERO", (1 * (comboToInt / 100)), "Times.")
+			if initLockPOS != 0 {
+				passZeroCount += 1
 			}
-			fmt.Println("PASSED ZERO", passedZero)
-			passedZero += 1
+
 			newLockPOS = newLockPOS % 100
-			return newLockPOS, passedZero
+
 		}
-		return newLockPOS, passedZero
+
+		return newLockPOS, passZeroCount
 	}
+
 	return 0, 0
 }
 
 func main() {
-	var combos []string
-	lock := 50
+	var combinationList []string
+	initLockPOS := 50
 	zeroCount := 0
-	passedZero := 0
+	passZeroCount := 0
 
 	// Open combination file
 	f, err := os.Open("combination.txt")
@@ -76,16 +68,17 @@ func main() {
 	scanner := bufio.NewScanner(f)
 
 	for scanner.Scan() {
-		combos = append(combos, scanner.Text())
+		combinationList = append(combinationList, scanner.Text())
 	}
 
-	for i := 0; i < len(combos); i++ {
-		lock, passedZero = rotateLock(combos[i], lock, passedZero)
-		if lock == 0 {
+	for i := 0; i < len(combinationList); i++ {
+		initLockPOS, passZeroCount = rotateLock(combinationList[i], initLockPOS, passZeroCount)
+
+		if initLockPOS == 0 {
 			zeroCount += 1
 		}
 	}
 
 	fmt.Println("zeroCount: ", zeroCount)
-	fmt.Println("passed zero: ", passedZero)
+	fmt.Println("Passed Zero", passZeroCount, "Times.")
 }
